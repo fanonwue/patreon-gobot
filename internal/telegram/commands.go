@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"github.com/fanonwue/patreon-gobot/internal/db"
@@ -196,10 +197,12 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 		listCampaign.AddReward(r)
 	}
 
-	listCampaigns := maps.Values(campaigns)
+	listCampaigns := slices.SortedFunc(maps.Values(campaigns), func(a, b *tmpl.ListCampaign) int {
+		return cmp.Compare(a.Campaign.Name(), b.Campaign.Name())
+	})
 
 	buf := new(bytes.Buffer)
-	err := listRewardsTemplate.Execute(buf, &tmpl.ListTemplateData{Campaigns: slices.Collect(listCampaigns)})
+	err := listRewardsTemplate.Execute(buf, &tmpl.ListTemplateData{Campaigns: listCampaigns})
 	if err != nil {
 		fmt.Printf("Error executing template: %v", err)
 	}

@@ -5,7 +5,7 @@ The following rewards are being observed:
 {{if not $first -}}-----------------------------------------{{end}}
 {{$first = false -}}
 <a href="{{$campaign.Campaign.FullUrl}}"><b>{{$campaign.Campaign.Name}}</b></a>
-{{range $reward := $campaign.Rewards}}
+{{range $reward := $campaign.RewardsSortedByAmountAscending}}
 <b>{{$reward.Title}}</b> for {{$reward.FormattedAmount}}
 (ID <code>{{$reward.Id}}</code>)
 {{end}}
