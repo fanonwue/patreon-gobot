@@ -41,6 +41,14 @@ func Values[M ~map[K]V, K comparable, V any](m M) []V {
 	return r
 }
 
+func Join[T any](values []T, sep string, transform func(T) string) string {
+	var stringified []string
+	for _, v := range values {
+		stringified = append(stringified, transform(v))
+	}
+	return strings.Join(stringified, sep)
+}
+
 func TrimHtmlText(s string) string {
 	return strings.Trim(s, "\n ")
 }

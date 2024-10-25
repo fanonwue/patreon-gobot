@@ -94,6 +94,10 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 	if len(missing) == 0 {
 		return
 	}
+
+	fmt.Printf("Notifying about missing rewards: [%s]\n", util.Join(missing, ", ", func(v *patreon.RewardResult) string {
+		return strconv.Itoa(int(v.Id))
+	}))
 	buf := new(bytes.Buffer)
 	err := missingRewardsTemplate.Execute(buf, &tmpl.MissingRewardsData{Rewards: missing})
 	if err != nil {

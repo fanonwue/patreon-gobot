@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	fmt.Println("Patreon GoBot starting up")
 	godotenv.Load()
 	db.CreateDatabase()
 
@@ -48,7 +49,7 @@ func main() {
 	cancelUpdateContext()
 	cancelAppContext()
 
-	fmt.Println("Adios!")
+	fmt.Println("Bot exiting!")
 }
 
 func updateInterval() time.Duration {
@@ -78,6 +79,7 @@ func StartBackgroundUpdates(ctx context.Context, interval time.Duration) {
 }
 
 func UpdateJob(ctx context.Context) {
+	fmt.Println("Checking for available rewards")
 	users := make([]db.User, 0)
 	db.Db().Find(&users)
 
@@ -125,7 +127,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 				tr.IsMissing = true
 				missingRewards = append(missingRewards, &r)
 			}
-			fmt.Printf("Rewards not found: %d\n", r.Id)
+			fmt.Printf("Reward not found: %d\n", r.Id)
 		}
 
 		tx.Save(&tr)
@@ -136,7 +138,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 }
 
 func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, client *patreon.Client) {
-	fmt.Printf("Rewards available: %d\n", r.Id)
+	fmt.Printf("Reward available: %d\n", r.Id)
 	now := time.Now()
 
 	if tr.AvailableSince == nil {
@@ -155,6 +157,7 @@ func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, c
 	}
 
 	if tr.LastNotified == nil || tr.AvailableSince.After(*tr.LastNotified) {
+		fmt.Printf("Notifying about available reward: %d\n", r.Id)
 		telegram.NotifyAvailable(user, r, campaign)
 		now := time.Now()
 		tr.LastNotified = &now
