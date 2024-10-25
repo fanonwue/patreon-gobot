@@ -1,0 +1,13 @@
+{{define "message"}}
+The following rewards are being observed:
+{{$first := true -}}
+{{range $campaign := .Campaigns}}
+{{if not $first -}}-----------------------------------------{{end}}
+{{$first = false -}}
+<a href="{{$campaign.Campaign.FullUrl}}"><b>{{$campaign.Campaign.Name}}</b></a>
+{{range $reward := $campaign.Rewards}}
+<b>{{$reward.Title}}</b> for {{$reward.FormattedAmount}}
+(ID <code>{{$reward.Id}}</code>)
+{{end}}
+{{- end}}
+{{end}}

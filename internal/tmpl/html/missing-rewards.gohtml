@@ -1,0 +1,6 @@
+{{define "message"}}
+Error fetching the following rewards:
+{{range $reward := .Rewards}}
+<code>{{$reward.Id}}</code> - {{rewardMissingReason $reward.Status}}
+{{- end}}
+{{end}}
