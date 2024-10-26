@@ -13,8 +13,10 @@ import (
 	"sync"
 )
 
+type RewardStatus int
+
 const (
-	RewardFound = iota
+	RewardFound RewardStatus = iota
 	RewardErrorUnknown
 	RewardErrorForbidden
 	RewardErrorNotFound
@@ -35,7 +37,7 @@ type (
 	RewardResult struct {
 		Id     RewardId
 		Reward *Reward
-		Status int
+		Status RewardStatus
 	}
 )
 

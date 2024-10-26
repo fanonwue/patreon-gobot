@@ -40,7 +40,7 @@ func createTemplate(targetTemplatePath string) (*template.Template, error) {
 
 func templateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"rewardMissingReason": func(reason int) string {
+		"rewardMissingReason": func(reason patreon.RewardStatus) string {
 			switch reason {
 			case patreon.RewardErrorForbidden:
 				return "Forbidden"
