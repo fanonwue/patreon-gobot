@@ -18,6 +18,8 @@ const (
 	LevelDebug
 )
 
+const DefaultCalldepth = 3
+
 var levelNames = map[int]string{
 	LevelPanic: "PANIC - ",
 	LevelFatal: "FATAL - ",
@@ -46,61 +48,65 @@ func SetLogLevel(level int) {
 	logLevel = level
 }
 
-func Logf(level int, msg string, args ...any) {
+func Logf(level int, calldepth int, msg string, args ...any) {
 	if logLevel < level {
 		return
 	}
+	if calldepth == 0 {
+		calldepth = DefaultCalldepth
+	}
+
 	newArgs := []any{levelNames[level]}
-	err := log.Output(3, fmt.Sprintf("\t%s"+msg, append(newArgs, args...)...))
+	err := log.Output(calldepth, fmt.Sprintf("\t%s"+msg, append(newArgs, args...)...))
 	if err != nil {
 		fmt.Printf("ERROR: Could not write log message: %v", err)
 	}
 }
 
 func Info(msg string) {
-	Logf(LevelInfo, msg)
+	Logf(LevelInfo, DefaultCalldepth, msg)
 }
 
 func Infof(msg string, args ...any) {
-	Logf(LevelInfo, msg, args...)
+	Logf(LevelInfo, DefaultCalldepth, msg, args...)
 }
 
 func Warn(msg string) {
-	Logf(LevelWarn, msg)
+	Logf(LevelWarn, DefaultCalldepth, msg)
 }
 
 func Warnf(msg string, args ...any) {
-	Logf(LevelWarn, msg, args...)
+	Logf(LevelWarn, DefaultCalldepth, msg, args...)
 }
 
 func Error(msg string) {
-	Logf(LevelError, msg)
+	Logf(LevelError, DefaultCalldepth, msg)
 }
 
 func Errorf(msg string, args ...any) {
-	Logf(LevelError, msg, args...)
+	Logf(LevelError, DefaultCalldepth, msg, args...)
 }
 
 func Debug(msg string) {
-	Logf(LevelDebug, msg)
+	Logf(LevelDebug, DefaultCalldepth, msg)
 }
 
 func Debugf(msg string, args ...any) {
-	Logf(LevelDebug, msg, args...)
+	Logf(LevelDebug, DefaultCalldepth, msg, args...)
 }
 
 func Panic(msg string) {
-	Logf(LevelPanic, msg)
+	Logf(LevelPanic, DefaultCalldepth, msg)
 }
 
 func Panicf(msg string, args ...any) {
-	Logf(LevelPanic, msg, args...)
+	Logf(LevelPanic, DefaultCalldepth, msg, args...)
 }
 
 func Fatal(msg string) {
-	Logf(LevelFatal, msg)
+	Logf(LevelFatal, DefaultCalldepth, msg)
 }
 
 func Fatalf(msg string, args ...any) {
-	Logf(LevelFatal, msg, args...)
+	Logf(LevelFatal, DefaultCalldepth, msg, args...)
 }

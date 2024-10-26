@@ -48,6 +48,7 @@ func StartBot(ctx context.Context) *bot.Bot {
 	}, &convEnd)
 
 	opts := []bot.Option{
+		bot.WithErrorsHandler(errorHandler),
 		bot.WithDefaultHandler(noopHandler),
 		bot.WithMiddlewares(middlewares()...),
 	}
@@ -120,6 +121,10 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 // to those will be escaped
 func Escape(s string) string {
 	return htmlEscaper.Replace(s)
+}
+
+func errorHandler(err error) {
+	logging.Logf(logging.LevelError, logging.DefaultCalldepth+1, "[TGBOT]: %v", err)
 }
 
 func patreonClient() *patreon.Client { return tgPatreonClient }
