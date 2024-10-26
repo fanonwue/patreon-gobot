@@ -14,6 +14,7 @@ ifeq ($(GOOS), windows)
 	EXECUTABLE_NAME := $(EXECUTABLE_NAME).exe
 endif
 
+# Enabling CGO is required for sqlite, the Go package is just a stub
 build:
 	CGO_ENABLED=1 go build -tags $(GO_TAGS) -o bin/$(EXECUTABLE_NAME) --ldflags="$(LD_FLAGS)"
 
