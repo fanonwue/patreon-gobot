@@ -85,7 +85,7 @@ func NotifyAvailable(user *db.User, reward *patreon.RewardResult, campaign *patr
 		logging.Errorf("Error executing template: %v", err)
 	}
 
-	botInstance.SendMessage(botContext, &bot.SendMessageParams{
+	sendMessage(botContext, &bot.SendMessageParams{
 		ChatID:    user.TelegramChatId,
 		ParseMode: models.ParseModeHTML,
 		Text:      buf.String(),
@@ -106,7 +106,7 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 		logging.Errorf("Error executing template: %v", err)
 	}
 
-	botInstance.SendMessage(botContext, &bot.SendMessageParams{
+	sendMessage(botContext, &bot.SendMessageParams{
 		ChatID:    user.TelegramChatId,
 		ParseMode: models.ParseModeHTML,
 		Text:      buf.String(),
@@ -166,7 +166,7 @@ func commandHandlers() []*CommandHandler {
 }
 
 func noopHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
 		ParseMode: models.ParseModeHTML,
 		Text:      "Not yet implemented",
@@ -194,7 +194,7 @@ func registerCommands(commands []*CommandHandler, tgBot *bot.Bot, ctx context.Co
 
 func cancelConversationHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	// Send a message to indicate the conversation has been cancelled
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   "conversation cancelled",
 	})
@@ -237,7 +237,7 @@ func creatorOnlyMiddleware(next bot.HandlerFunc) bot.HandlerFunc {
 		}
 
 		if int64(telegramCreatorId) != chatId {
-			b.SendMessage(ctx, &bot.SendMessageParams{
+			sendMessage(ctx, &bot.SendMessageParams{
 				ChatID: chatId,
 				Text:   "This bot is not yet available for the public. If you are interested, please contact this bot's creator (see bot description)",
 			})
@@ -245,4 +245,12 @@ func creatorOnlyMiddleware(next bot.HandlerFunc) bot.HandlerFunc {
 			next(ctx, b, update)
 		}
 	}
+}
+
+func sendMessage(ctx context.Context, params *bot.SendMessageParams) *models.Message {
+	m, err := botInstance.SendMessage(ctx, params)
+	if err != nil {
+		logging.Errorf("Error sending message: %v", err)
+	}
+	return m
 }

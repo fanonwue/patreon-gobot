@@ -55,7 +55,7 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	ids := parseIdList(update.Message.Text)
 
 	if len(ids) == 0 {
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID:          chatId,
 			ReplyParameters: &reply,
 			Text:            "No valid reward IDs provided",
@@ -77,7 +77,7 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 
 	if len(newRewardIds) == 0 {
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID:          chatId,
 			ReplyParameters: &reply,
 			Text:            "No new reward ID found",
@@ -103,7 +103,7 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		}
 	}
 	tx.Commit()
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
 		Text:            fmt.Sprintf("Now tracking rewards [%s]", strings.Join(savedRewards, ", ")),
@@ -130,7 +130,7 @@ func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update
 	ids := parseIdList(update.Message.Text)
 
 	if len(ids) == 0 {
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID:          chatId,
 			ReplyParameters: &reply,
 			Text:            "No valid reward IDs provided",
@@ -149,7 +149,7 @@ func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update
 		}
 	}
 	tx.Commit()
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
 		Text:            fmt.Sprintf("Removed rewards [%s]", strings.Join(removedRewards, ", ")),
@@ -222,7 +222,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 
 	disableLinkPreview := true
 
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:             chatId,
 		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinkPreview},
 		ParseMode:          models.ParseModeHTML,
@@ -239,7 +239,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 		logging.Errorf("Error executing template: %v", err)
 	}
 
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:             chatId,
 		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: &disableLinkPreview},
 		ParseMode:          models.ParseModeHTML,
@@ -270,7 +270,7 @@ func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.U
 	if tx.Error != nil {
 		tx.Rollback()
 		logging.Errorf("Error resetting rewards: %v", tx.Error)
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID:          chatId,
 			ReplyParameters: &reply,
 			Text:            "Error resetting rewards",
@@ -278,7 +278,7 @@ func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.U
 		return
 	}
 	tx.Commit()
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
 		Text:            "Notifications reset",
@@ -313,7 +313,7 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	user, userFound := userFromChatId(chatId, tx)
 
 	if userFound {
-		b.SendMessage(ctx, &bot.SendMessageParams{
+		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatId,
 			Text:   "You are already registered. Welcome back!",
 		})
@@ -325,7 +325,7 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	tx.Create(&user)
 	tx.Commit()
 
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    chatId,
 		ParseMode: models.ParseModeHTML,
 		Text:      "You have been registered as a user. You can start adding rewards that you'd like to track via tha /add command.",
@@ -344,7 +344,7 @@ func createPrivacyPolicyCommand() *CommandHandler {
 }
 
 func privacyPolicyHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.SendMessage(ctx, &bot.SendMessageParams{
+	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
 		ParseMode: models.ParseModeHTML,
 		Text:      fmt.Sprintf(privacyPolicyTemplate, update.Message.Chat.ID),
