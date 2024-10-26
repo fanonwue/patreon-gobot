@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
+type LogLevel int
+
 const (
-	LevelPanic = iota
+	LevelPanic LogLevel = iota
 	LevelFatal
 	LevelError
 	LevelWarn
@@ -21,7 +23,7 @@ const (
 const DefaultLevel = LevelInfo
 const DefaultCalldepth = 3
 
-var levelNames = map[int]string{
+var levelNames = map[LogLevel]string{
 	LevelPanic: "PANIC - ",
 	LevelFatal: "FATAL - ",
 	LevelError: "ERROR - ",
@@ -45,11 +47,11 @@ func callerInfo(calldepth int) string {
 	return strings.Join(caller, "/") + ":" + strconv.Itoa(no)
 }
 
-func SetLogLevel(level int) {
+func SetLogLevel(level LogLevel) {
 	logLevel = level
 }
 
-func Logf(level int, calldepth int, msg string, args ...any) {
+func Logf(level LogLevel, calldepth int, msg string, args ...any) {
 	if logLevel < level {
 		return
 	}
