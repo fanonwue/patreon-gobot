@@ -12,6 +12,7 @@ import (
 	"github.com/fanonwue/patreon-gobot/internal/util"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"gorm.io/gorm"
 	"maps"
 	"slices"
 	"strconv"
@@ -47,13 +48,17 @@ func addRewardsCommand() *CommandHandler {
 
 func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatId := update.Message.Chat.ID
+	reply := models.ReplyParameters{
+		MessageID: update.Message.ID,
+	}
 
 	ids := parseIdList(update.Message.Text)
 
 	if len(ids) == 0 {
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatId,
-			Text:   "No valid reward IDs provided",
+			ChatID:          chatId,
+			ReplyParameters: &reply,
+			Text:            "No valid reward IDs provided",
 		})
 		return
 	}
@@ -73,8 +78,9 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	if len(newRewardIds) == 0 {
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatId,
-			Text:   "No new reward ID found",
+			ChatID:          chatId,
+			ReplyParameters: &reply,
+			Text:            "No new reward ID found",
 		})
 		return
 	}
@@ -98,8 +104,9 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 	tx.Commit()
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatId,
-		Text:   fmt.Sprintf("Now tracking rewards [%s]", strings.Join(savedRewards, ", ")),
+		ChatID:          chatId,
+		ReplyParameters: &reply,
+		Text:            fmt.Sprintf("Now tracking rewards [%s]", strings.Join(savedRewards, ", ")),
 	})
 }
 
@@ -116,13 +123,17 @@ func removeRewardsCommand() *CommandHandler {
 
 func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatId := update.Message.Chat.ID
+	reply := models.ReplyParameters{
+		MessageID: update.Message.ID,
+	}
 
 	ids := parseIdList(update.Message.Text)
 
 	if len(ids) == 0 {
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatId,
-			Text:   "No valid reward IDs provided",
+			ChatID:          chatId,
+			ReplyParameters: &reply,
+			Text:            "No valid reward IDs provided",
 		})
 		return
 	}
@@ -139,8 +150,9 @@ func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update
 	}
 	tx.Commit()
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatId,
-		Text:   fmt.Sprintf("Removed rewards [%s]", strings.Join(removedRewards, ", ")),
+		ChatID:          chatId,
+		ReplyParameters: &reply,
+		Text:            fmt.Sprintf("Removed rewards [%s]", strings.Join(removedRewards, ", ")),
 	})
 }
 
@@ -233,7 +245,6 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 		ParseMode:          models.ParseModeHTML,
 		Text:               buf.String(),
 	})
-
 }
 
 func cancelCommand() *CommandHandler {
