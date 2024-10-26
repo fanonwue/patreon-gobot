@@ -18,6 +18,7 @@ const (
 	LevelDebug
 )
 
+const DefaultLevel = LevelInfo
 const DefaultCalldepth = 3
 
 var levelNames = map[int]string{
@@ -29,7 +30,7 @@ var levelNames = map[int]string{
 	LevelDebug: "DEBUG - ",
 }
 
-var logLevel = LevelInfo
+var logLevel = DefaultLevel
 
 func init() {
 	log.SetOutput(os.Stdout)
