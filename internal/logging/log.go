@@ -22,6 +22,8 @@ const (
 
 const DefaultLevel = LevelInfo
 const DefaultCalldepth = 3
+const stdErrThresholdLevel = LevelError
+const loggerFlags = log.Ldate | log.Ltime | log.Lshortfile | log.Lmicroseconds
 
 var levelNames = map[LogLevel]string{
 	LevelPanic: "PANIC - ",
@@ -34,9 +36,12 @@ var levelNames = map[LogLevel]string{
 
 var logLevel = DefaultLevel
 
+var defaultLogger = log.New(os.Stdout, "", loggerFlags)
+var errorLogger = log.New(os.Stderr, "", loggerFlags)
+
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile | log.Lmicroseconds)
+	log.SetFlags(loggerFlags)
 }
 
 func callerInfo(calldepth int) string {
@@ -45,6 +50,13 @@ func callerInfo(calldepth int) string {
 	fileParts := strings.Split(file, "/")
 	caller := fileParts[len(fileParts)-2:]
 	return strings.Join(caller, "/") + ":" + strconv.Itoa(no)
+}
+
+func loggerForLevel(level LogLevel) *log.Logger {
+	if level <= stdErrThresholdLevel {
+		return errorLogger
+	}
+	return defaultLogger
 }
 
 func SetLogLevel(level LogLevel) {
@@ -60,9 +72,10 @@ func Logf(level LogLevel, calldepth int, msg string, args ...any) {
 	}
 
 	newArgs := []any{levelNames[level]}
-	err := log.Output(calldepth, fmt.Sprintf("\t%s"+msg, append(newArgs, args...)...))
+
+	err := loggerForLevel(level).Output(calldepth, fmt.Sprintf("\t%s"+msg, append(newArgs, args...)...))
 	if err != nil {
-		fmt.Printf("ERROR: Could not write log message: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "ERROR: Could not write log message: %v", err)
 	}
 }
 
