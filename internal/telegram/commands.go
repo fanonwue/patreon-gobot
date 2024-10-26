@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fanonwue/patreon-gobot/internal/db"
+	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"github.com/fanonwue/patreon-gobot/internal/patreon"
 	"github.com/fanonwue/patreon-gobot/internal/tmpl"
 	"github.com/fanonwue/patreon-gobot/internal/util"
@@ -204,7 +205,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 	buf := new(bytes.Buffer)
 	err := listRewardsTemplate.Execute(buf, &tmpl.ListTemplateData{Campaigns: listCampaigns})
 	if err != nil {
-		fmt.Printf("Error executing template: %v", err)
+		logging.Errorf("Error executing template: %v", err)
 	}
 
 	disableLinkPreview := true
@@ -223,7 +224,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 	buf.Reset()
 	err = missingRewardsTemplate.Execute(buf, &tmpl.MissingRewardsData{Rewards: missingRewards})
 	if err != nil {
-		fmt.Printf("Error executing template: %v", err)
+		logging.Errorf("Error executing template: %v", err)
 	}
 
 	b.SendMessage(ctx, &bot.SendMessageParams{

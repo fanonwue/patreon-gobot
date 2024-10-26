@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/fanonwue/patreon-gobot/internal/db"
+	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"github.com/fanonwue/patreon-gobot/internal/patreon"
 	"github.com/fanonwue/patreon-gobot/internal/tmpl"
 	"github.com/fanonwue/patreon-gobot/internal/util"
@@ -81,7 +81,7 @@ func NotifyAvailable(user *db.User, reward *patreon.RewardResult, campaign *patr
 		Campaign: campaign,
 	})
 	if err != nil {
-		fmt.Printf("Error executing template: %v", err)
+		logging.Errorf("Error executing template: %v", err)
 	}
 
 	botInstance.SendMessage(botContext, &bot.SendMessageParams{
@@ -96,13 +96,13 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 		return
 	}
 
-	fmt.Printf("Notifying about missing rewards: [%s]\n", util.Join(missing, ", ", func(v *patreon.RewardResult) string {
+	logging.Infof("Notifying about missing rewards: [%s]", util.Join(missing, ", ", func(v *patreon.RewardResult) string {
 		return strconv.Itoa(int(v.Id))
 	}))
 	buf := new(bytes.Buffer)
 	err := missingRewardsTemplate.Execute(buf, &tmpl.MissingRewardsData{Rewards: missing})
 	if err != nil {
-		fmt.Printf("Error executing template: %v", err)
+		logging.Errorf("Error executing template: %v", err)
 	}
 
 	botInstance.SendMessage(botContext, &bot.SendMessageParams{

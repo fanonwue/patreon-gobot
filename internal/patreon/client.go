@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"iter"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 			rewardChannel <- ra
 		}
 	}()
-	//fmt.Printf("Fetching reward %d \n", id)
+	logging.Debugf("Fetching reward %d", id)
 	reward, err := c.FetchReward(id)
 
 	if err == nil {
@@ -108,7 +109,7 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 				ra.Status = RewardErrorNotFound
 			}
 		} else {
-			fmt.Printf("Error fetching reward %d: %v", id, err)
+			logging.Errorf("Error fetching reward %d: %v", id, err)
 		}
 	}
 }
@@ -132,7 +133,6 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], ctx context.Context) <-
 			// Guard channel to limit parallelism
 			jobs <- jobCounter
 			if ctx.Err() != nil {
-				fmt.Println(ctx.Err())
 				break
 			}
 			jobCounter += 1

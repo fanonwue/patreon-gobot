@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/fanonwue/patreon-gobot/internal/db"
+	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"github.com/fanonwue/patreon-gobot/internal/patreon"
 	"github.com/fanonwue/patreon-gobot/internal/telegram"
 	"github.com/fanonwue/patreon-gobot/internal/util"
@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Patreon GoBot starting up")
+	logging.Info("Patreon GoBot starting up")
 	godotenv.Load()
 	db.CreateDatabase()
 
@@ -47,7 +47,7 @@ func main() {
 
 	select {
 	case <-appContext.Done():
-		fmt.Println("Bot exiting!")
+		logging.Info("Bot exiting!")
 	}
 }
 
@@ -68,7 +68,7 @@ func StartBackgroundUpdates(ctx context.Context, interval time.Duration) {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Stopping BackgroundUpdates")
+			logging.Info("Stopping BackgroundUpdates")
 			// The context is over, stop processing results
 			return
 		case <-ticker.C:
@@ -78,7 +78,7 @@ func StartBackgroundUpdates(ctx context.Context, interval time.Duration) {
 }
 
 func UpdateJob(ctx context.Context) {
-	fmt.Println("Checking for available rewards")
+	logging.Info("Checking for available rewards")
 	users := make([]db.User, 0)
 	db.Db().Find(&users)
 
@@ -108,7 +108,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 		tr := db.TrackedReward{}
 		tx.First(&tr, "user_id = ? AND reward_id = ?", user.ID, r.Id)
 		if tx.Error != nil || tr.ID == 0 {
-			fmt.Printf("Could not find tracked reward %d for user %d\n", r.Id, user.ID)
+			logging.Infof("Could not find tracked reward %d for user %d", r.Id, user.ID)
 			continue
 		}
 
@@ -126,7 +126,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 				tr.IsMissing = true
 				missingRewards = append(missingRewards, &r)
 			}
-			fmt.Printf("Reward not found: %d\n", r.Id)
+			logging.Warnf("Reward not found: %d", r.Id)
 		}
 
 		tx.Save(&tr)
@@ -137,7 +137,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 }
 
 func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, client *patreon.Client) {
-	fmt.Printf("Reward available: %d\n", r.Id)
+	logging.Infof("Reward available: %d", r.Id)
 	now := time.Now()
 
 	if tr.AvailableSince == nil {
@@ -156,7 +156,7 @@ func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, c
 	}
 
 	if tr.LastNotified == nil || tr.AvailableSince.After(*tr.LastNotified) {
-		fmt.Printf("Notifying about available reward: %d\n", r.Id)
+		logging.Infof("Notifying about available reward: %d", r.Id)
 		telegram.NotifyAvailable(user, r, campaign)
 		now := time.Now()
 		tr.LastNotified = &now
