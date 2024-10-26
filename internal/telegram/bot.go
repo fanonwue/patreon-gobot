@@ -21,6 +21,7 @@ import (
 var botInstance *bot.Bot
 var botContext context.Context
 var privacyPolicyCommand = createPrivacyPolicyCommand()
+var htmlEscaper = strings.NewReplacer("<", "&lt;", ">", "&gt;", "&", "&amp;")
 
 var convHandler *ConversationHandler
 
@@ -110,6 +111,15 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 		Text:      buf.String(),
 	})
 	return
+}
+
+// Escape
+// Escapes the string (using HTML entities) to make it compatible with Telegram's HTML format.
+//
+// The API only supports the following entities: `&lt;`, `&gt;` and `&amp;`, therefore only the characters corresponding
+// to those will be escaped
+func Escape(s string) string {
+	return htmlEscaper.Replace(s)
 }
 
 func patreonClient() *patreon.Client { return tgPatreonClient }

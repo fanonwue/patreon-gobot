@@ -54,5 +54,6 @@ func templateFuncMap() template.FuncMap {
 				return "Unknown error"
 			}
 		},
+		"tgEscape": func(s string) string { return Escape(s) },
 	}
 }
