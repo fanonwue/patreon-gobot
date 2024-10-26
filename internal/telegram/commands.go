@@ -278,7 +278,7 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    chatId,
 		ParseMode: models.ParseModeHTML,
-		Text:      "You have been registered as a user. Please set up your cookies using the /cookies command.",
+		Text:      "You have been registered as a user. You can start adding rewards that you'd like to track via tha /add command.",
 	})
 }
 
