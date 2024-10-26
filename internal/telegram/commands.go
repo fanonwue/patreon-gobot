@@ -247,6 +247,44 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 	})
 }
 
+func resetNotificationsCommand() *CommandHandler {
+	return &CommandHandler{
+		Pattern:     "/reset_notifications",
+		Description: "Resets the notification tracker. Previous notifications for (still) available rewards will be sent again.",
+		HandlerType: bot.HandlerTypeMessageText,
+		MatchType:   bot.MatchTypeExact,
+		HandlerFunc: resetNotificationsHandler,
+		ChatAction:  models.ChatActionTyping,
+	}
+}
+
+func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	chatId := update.Message.Chat.ID
+	reply := models.ReplyParameters{
+		MessageID: update.Message.ID,
+	}
+
+	tx := db.Db().Begin()
+	user, _ := userFromChatId(chatId, tx)
+	tx.Model(&db.TrackedReward{}).Where("user_id = ?", user.ID).Update("last_notified", gorm.Expr("NULL"))
+	if tx.Error != nil {
+		tx.Rollback()
+		logging.Errorf("Error resetting rewards: %v", tx.Error)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:          chatId,
+			ReplyParameters: &reply,
+			Text:            "Error resetting rewards",
+		})
+		return
+	}
+	tx.Commit()
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:          chatId,
+		ReplyParameters: &reply,
+		Text:            "Notifications reset",
+	})
+}
+
 func cancelCommand() *CommandHandler {
 	return &CommandHandler{
 		Pattern:     "/cancel",

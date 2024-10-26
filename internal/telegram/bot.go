@@ -148,6 +148,7 @@ func commandHandlers() []*CommandHandler {
 		removeRewardsCommand(),
 		cancelCommand(),
 		listRewardsCommand(),
+		resetNotificationsCommand(),
 	}
 
 	slices.SortStableFunc(sortedCommands, func(a, b *CommandHandler) int {
