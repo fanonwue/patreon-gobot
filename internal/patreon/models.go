@@ -90,9 +90,6 @@ func unmarshalId(buf []byte) (int, error) {
 }
 
 func (r *Reward) IsAvailable() bool {
-	if r.Id == 7790866 {
-		return true
-	}
 	return r.Attributes.Remaining > 0
 }
 
