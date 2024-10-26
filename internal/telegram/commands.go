@@ -24,7 +24,11 @@ func parseIdList(message string) []int {
 	splitByComma := strings.Split(message, ",")
 	for _, segment := range splitByComma {
 		splitBySpace := strings.Split(segment, " ")
-		for _, id := range splitBySpace {
+		for _, rawId := range splitBySpace {
+			id := strings.TrimSpace(rawId)
+			if id == "" {
+				continue
+			}
 			parsedId, err := strconv.Atoi(id)
 			if err != nil {
 				continue
@@ -103,11 +107,13 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		}
 	}
 	tx.Commit()
+	savedRewardsJoined := strings.Join(savedRewards, ", ")
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
-		Text:            fmt.Sprintf("Now tracking rewards [%s]", strings.Join(savedRewards, ", ")),
+		Text:            fmt.Sprintf("Now tracking rewards [%s]", savedRewardsJoined),
 	})
+	logging.Infof("Added rewards [%s] for user %d (Chat ID: %d)", savedRewardsJoined, user.ID, user.TelegramChatId)
 }
 
 func removeRewardsCommand() *CommandHandler {
@@ -149,11 +155,13 @@ func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update
 		}
 	}
 	tx.Commit()
+	removedRewardsJoined := strings.Join(removedRewards, ", ")
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
-		Text:            fmt.Sprintf("Removed rewards [%s]", strings.Join(removedRewards, ", ")),
+		Text:            fmt.Sprintf("Removed rewards [%s]", removedRewardsJoined),
 	})
+	logging.Infof("Removed rewards [%s] for user %d (Chat ID: %d)", removedRewardsJoined, user.ID, user.TelegramChatId)
 }
 
 func listRewardsCommand() *CommandHandler {
@@ -283,6 +291,7 @@ func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.U
 		ReplyParameters: &reply,
 		Text:            "Notifications reset",
 	})
+	logging.Infof("Notifications reset for user %d (Chat ID: %d)", user.ID, user.TelegramChatId)
 }
 
 func cancelCommand() *CommandHandler {
@@ -330,6 +339,7 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		ParseMode: models.ParseModeHTML,
 		Text:      "You have been registered as a user. You can start adding rewards that you'd like to track via tha /add command.",
 	})
+	logging.Infof("Registered new user %d (Chat ID: %d)", user.ID, user.TelegramChatId)
 }
 
 func createPrivacyPolicyCommand() *CommandHandler {
