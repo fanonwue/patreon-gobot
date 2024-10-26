@@ -18,13 +18,11 @@ This bot saves the following user information:
 	- In your case, this would be <code>%d</code>
 
 2. Your provided user information:
-	- Unread notes setting
+	- Language
 
-3. Your FurAffinity cookies 
-	- these are very sensitive, this allows the bot to fully impersonate you, which is required due to how FurAffinity works
-
-4. A list of IDs that belong to your FurAffinity account: Note IDs, Comment IDs, Submission IDs and Journal IDs
-	- this is needed to keep track of entries this bot has notified you about already. No content is stored, although it is fetched temporarily when notifying you.
+3. Your tracked Patreon rewards (their IDs)
+	- These will be periodically checked via the Patreon API to see whether new slots are available
+	- This can be linked to the campaign and the creator they are associated with
 `)
 
 var baseTemplate = template.Must(
