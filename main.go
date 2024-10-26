@@ -21,10 +21,14 @@ func main() {
 	godotenv.Load()
 	db.CreateDatabase()
 
-	appContext, cancelAppContext := signal.NotifyContext(context.Background(), os.Interrupt)
+	appContext, _ := signal.NotifyContext(context.Background(),
+		os.Interrupt,
+		os.Kill,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
 
-	telegramContext, cancelTelegramContext := context.WithCancel(appContext)
-	_ = telegram.StartBot(telegramContext)
+	_ = telegram.StartBot(appContext)
 
 	//user := db.User{}
 	//user.ID = 1
@@ -39,17 +43,12 @@ func main() {
 	//	})
 	//}
 
-	updateContext, cancelUpdateContext := context.WithCancel(appContext)
-	go StartBackgroundUpdates(updateContext, updateInterval())
+	go StartBackgroundUpdates(appContext, updateInterval())
 
-	quitChannel := make(chan os.Signal, 1)
-	signal.Notify(quitChannel, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	<-quitChannel
-	cancelTelegramContext()
-	cancelUpdateContext()
-	cancelAppContext()
-
-	fmt.Println("Bot exiting!")
+	select {
+	case <-appContext.Done():
+		fmt.Println("Bot exiting!")
+	}
 }
 
 func updateInterval() time.Duration {
