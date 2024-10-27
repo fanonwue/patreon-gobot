@@ -10,13 +10,15 @@ else
 endif
 
 EXECUTABLE_NAME := patreon-gobot
+CC := cc
 ifeq ($(GOOS), windows)
 	EXECUTABLE_NAME := $(EXECUTABLE_NAME).exe
+	CC := x86_64-w64-mingw32-gcc-win32
 endif
 
 # Enabling CGO is required for sqlite, the Go package is just a stub
 build:
-	CGO_ENABLED=1 go build -tags $(GO_TAGS) -o bin/$(EXECUTABLE_NAME) --ldflags="$(LD_FLAGS)"
+	CGO_ENABLED=1 CC=$(CC) go build -tags $(GO_TAGS) -o bin/$(EXECUTABLE_NAME) --ldflags="$(LD_FLAGS)"
 
 deps:
 	go mod download && go mod verify
