@@ -26,12 +26,12 @@ const stdErrThresholdLevel = LevelError
 const loggerFlags = log.Ldate | log.Ltime | log.Lshortfile | log.Lmicroseconds
 
 var levelNames = map[LogLevel]string{
-	LevelPanic: "PANIC - ",
-	LevelFatal: "FATAL - ",
-	LevelError: "ERROR - ",
-	LevelWarn:  "WARN  - ",
-	LevelInfo:  "INFO  - ",
-	LevelDebug: "DEBUG - ",
+	LevelPanic: "[PANIC] ",
+	LevelFatal: "[FATAL] ",
+	LevelError: "[ERROR] ",
+	LevelWarn:  "[WARN]  ",
+	LevelInfo:  "[INFO]  ",
+	LevelDebug: "[DEBUG] ",
 }
 
 var logLevel = DefaultLevel
