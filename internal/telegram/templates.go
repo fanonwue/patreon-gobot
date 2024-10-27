@@ -48,6 +48,8 @@ func templateFuncMap() template.FuncMap {
 				return "Not Found"
 			case patreon.RewardErrorNoCampaign:
 				return "No Campaign"
+			case patreon.RewardErrorRateLimit:
+				return "Rate limited"
 			case patreon.RewardFound:
 				return "Reward found (?!?!)"
 			default:

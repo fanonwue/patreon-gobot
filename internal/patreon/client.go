@@ -21,6 +21,7 @@ const (
 	RewardErrorForbidden
 	RewardErrorNotFound
 	RewardErrorNoCampaign
+	RewardErrorRateLimit
 )
 
 type (
@@ -109,6 +110,8 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 				ra.Status = RewardErrorForbidden
 			case http.StatusNotFound:
 				ra.Status = RewardErrorNotFound
+			case http.StatusTooManyRequests:
+				ra.Status = RewardErrorRateLimit
 			}
 		} else {
 			logging.Errorf("Error fetching reward %d: %v", id, err)
@@ -169,13 +172,16 @@ func (c *Client) fetch(url *url.URL, target any) error {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return json.NewDecoder(resp.Body).Decode(target)
+	case http.StatusNotFound:
 		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("URL not found: %s", url.String())}
-	} else if resp.StatusCode == http.StatusForbidden {
+	case http.StatusForbidden:
 		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("access forbidden for URL: %s", url.String())}
-	} else if resp.StatusCode != http.StatusOK {
+	case http.StatusTooManyRequests:
+		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("Hit rate limit for URL: %s", url.String())}
+	default:
 		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("error fetching URL: %s", url.String())}
 	}
-
-	return json.NewDecoder(resp.Body).Decode(target)
 }
