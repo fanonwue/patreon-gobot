@@ -16,8 +16,11 @@ import (
 	"time"
 )
 
+const minimumUpdateInterval = 30 * time.Second
+
 func main() {
-	logging.Info("Patreon GoBot starting up")
+	logging.Info("---- BOT STARTING ----")
+	logging.Info("Welcome to Patreon GoBot!")
 	godotenv.Load()
 	db.CreateDatabase()
 
@@ -45,10 +48,8 @@ func main() {
 
 	go StartBackgroundUpdates(appContext, updateInterval())
 
-	select {
-	case <-appContext.Done():
-		logging.Info("Bot exiting!")
-	}
+	<-appContext.Done()
+	logging.Info("Bot exiting!")
 }
 
 func updateInterval() time.Duration {
@@ -56,13 +57,17 @@ func updateInterval() time.Duration {
 	updateIntervalRaw, err := strconv.Atoi(os.Getenv(util.PrefixEnvVar("UPDATE_INTERVAL")))
 	if err == nil {
 		interval = time.Duration(updateIntervalRaw) * time.Second
-
+	}
+	if interval < minimumUpdateInterval {
+		logging.Warnf("UPDATE_INTERVAL set too low, setting it to the minimum interval of %.0f seconds", minimumUpdateInterval.Seconds())
+		interval = minimumUpdateInterval
 	}
 	return interval
 }
 
 func StartBackgroundUpdates(ctx context.Context, interval time.Duration) {
 	UpdateJob(ctx)
+	logging.Infof("Starting background updates at an interval of %.0f seconds", interval.Seconds())
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
