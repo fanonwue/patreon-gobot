@@ -3,8 +3,10 @@ package logging
 import (
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -25,21 +27,33 @@ const DefaultCalldepth = 3
 const stdErrThresholdLevel = LevelError
 const loggerFlags = log.Ldate | log.Ltime | log.Lshortfile | log.Lmicroseconds
 
-var levelNames = map[LogLevel]string{
-	LevelPanic: "[PANIC] ",
-	LevelFatal: "[FATAL] ",
-	LevelError: "[ERROR] ",
-	LevelWarn:  "[WARN]  ",
-	LevelInfo:  "[INFO]  ",
-	LevelDebug: "[DEBUG] ",
-}
+var levelNames []string
 
 var logLevel = DefaultLevel
 
 var defaultLogger = log.New(os.Stdout, "", loggerFlags)
 var errorLogger = log.New(os.Stderr, "", loggerFlags)
 
+func levelNameSlice() []string {
+	levelNameMap := map[LogLevel]string{
+		LevelPanic: "[PANIC] ",
+		LevelFatal: "[FATAL] ",
+		LevelError: "[ERROR] ",
+		LevelWarn:  "[WARN]  ",
+		LevelInfo:  "[INFO]  ",
+		LevelDebug: "[DEBUG] ",
+	}
+
+	names := make([]string, 0, len(levelNameMap))
+	for _, key := range slices.Sorted(maps.Keys(levelNameMap)) {
+		names = append(names, levelNameMap[key])
+	}
+	return names
+}
+
 func init() {
+	levelNames = levelNameSlice()
+
 	log.SetOutput(os.Stdout)
 	log.SetFlags(loggerFlags)
 }
@@ -59,6 +73,10 @@ func loggerForLevel(level LogLevel) *log.Logger {
 	return defaultLogger
 }
 
+func levelName(level LogLevel) string {
+	return levelNames[level]
+}
+
 func SetLogLevel(level LogLevel) {
 	logLevel = level
 }
@@ -71,7 +89,7 @@ func Logf(level LogLevel, calldepth int, msg string, args ...any) {
 		calldepth = DefaultCalldepth
 	}
 
-	newArgs := []any{levelNames[level]}
+	newArgs := []any{levelName(level)}
 
 	err := loggerForLevel(level).Output(calldepth, fmt.Sprintf("\t%s"+msg, append(newArgs, args...)...))
 	if err != nil {
