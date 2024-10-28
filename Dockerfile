@@ -1,9 +1,9 @@
 ARG WORKDIR=/opt/app
 
-FROM golang:1.23-alpine as builder
+FROM golang:1.23-alpine AS builder
 ARG WORKDIR
 # Set Target to production for Makefile
-ENV TARGET prod
+ENV TARGET=prod
 WORKDIR $WORKDIR
 
 # make is needed for the Makefile
@@ -19,7 +19,7 @@ RUN make build
 
 FROM alpine
 ARG WORKDIR
-ENV APP_ENV production
+ENV PB_ENV=production
 RUN apk --no-cache add ca-certificates tzdata
 WORKDIR $WORKDIR
 COPY --from=builder $WORKDIR/bin/patreon-gobot .
