@@ -210,8 +210,8 @@ func (c *Client) fetch(url *url.URL, target any) error {
 	case http.StatusForbidden:
 		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("access forbidden for URL: %s", url.String())}
 	case http.StatusTooManyRequests:
-		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("Hit rate limit for URL: %s", url.String())}
+		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("hit rate limit for URL: %s", url.String())}
 	default:
-		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("error fetching URL: %s", url.String())}
+		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("unknown error fetching URL: %s", url.String())}
 	}
 }
