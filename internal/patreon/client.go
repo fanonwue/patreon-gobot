@@ -24,6 +24,8 @@ const (
 	RewardErrorRateLimit
 )
 
+const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"
+
 type (
 	ResponseCodeError struct {
 		StatusCode int
@@ -193,8 +195,13 @@ func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, err
 	return campaignData, err
 }
 
+//goland:noinspection GoBoolExpressions
 func (c *Client) fetch(url *url.URL, target any) error {
-	resp, err := c.httpClient.Get(url.String())
+	req, _ := http.NewRequest("GET", url.String(), nil)
+	if userAgent != "" {
+		req.Header.Add("User-Agent", userAgent)
+	}
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
