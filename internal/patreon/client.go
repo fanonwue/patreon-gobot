@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
-	"strconv"
 	"sync"
 )
 
@@ -154,9 +153,9 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], forceRefresh bool, ctx 
 
 func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
 	if !forceRefresh {
-		cached, found := rewardsCache.Get(strconv.Itoa(int(id)))
+		cached, found := rewardsCache.Get(id)
 		if found && cached != nil {
-			return cached.(*Reward), nil
+			return cached, nil
 		}
 	}
 	logging.Debugf("Fetching reward %d", id)
@@ -167,7 +166,7 @@ func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
 		rewardData = &reward.Data
 		// Make sure the reward actually got found before caching it
 		if rewardData.Id != 0 {
-			campaignsCache.SetDefault(strconv.Itoa(int(id)), rewardData)
+			rewardsCache.Set(id, rewardData)
 		}
 	}
 	return rewardData, err
@@ -175,9 +174,9 @@ func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
 
 func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, error) {
 	if !forceRefresh {
-		cached, found := campaignsCache.Get(strconv.Itoa(int(id)))
+		cached, found := campaignsCache.Get(id)
 		if found && cached != nil {
-			return cached.(*Campaign), nil
+			return cached, nil
 		}
 	}
 	logging.Debugf("Fetching campaign %d", id)
@@ -188,7 +187,7 @@ func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, err
 		campaignData = &campaign.Data
 		// Make sure the campaign actually got found before caching it
 		if campaignData.Id != 0 {
-			campaignsCache.SetDefault(strconv.Itoa(int(id)), campaignData)
+			campaignsCache.Set(id, campaignData)
 		}
 	}
 	return campaignData, err

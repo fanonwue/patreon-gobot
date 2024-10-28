@@ -19,18 +19,7 @@ import (
 const minimumUpdateInterval = 30 * time.Second
 
 func main() {
-	logging.Info("---- BOT STARTING ----")
-	logging.Info("Welcome to Patreon GoBot!")
-	godotenv.Load()
-	db.CreateDatabase()
-
-	appContext, _ := signal.NotifyContext(context.Background(),
-		os.Interrupt,
-		os.Kill,
-		syscall.SIGTERM,
-		syscall.SIGQUIT,
-	)
-
+	appContext, _ := setup()
 	_ = telegram.StartBot(appContext)
 
 	//user := db.User{}
@@ -50,6 +39,25 @@ func main() {
 
 	<-appContext.Done()
 	logging.Info("Bot exiting!")
+}
+
+func setup() (context.Context, context.CancelFunc) {
+	logging.SetLogLevel(logging.LevelDebug)
+	logging.Info("---- BOT STARTING ----")
+	logging.Info("Welcome to Patreon GoBot!")
+	godotenv.Load()
+	db.CreateDatabase()
+
+	appContext, cancel := signal.NotifyContext(context.Background(),
+		os.Interrupt,
+		os.Kill,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+
+	patreon.OnStartup(appContext)
+
+	return appContext, cancel
 }
 
 func updateInterval() time.Duration {
@@ -105,7 +113,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 	c := patreon.NewClient(4)
 	rewards := c.FetchRewardsSlice(util.Map(user.Rewards, func(tr db.TrackedReward) patreon.RewardId {
 		return patreon.RewardId(tr.RewardId)
-	}), ctx)
+	}), true, ctx)
 
 	tx := db.Db().Begin()
 	var missingRewards []*patreon.RewardResult
@@ -158,7 +166,7 @@ func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, c
 	var campaign *patreon.Campaign
 	campaignId, _ := r.Reward.CampaignId()
 	if campaignId > 0 {
-		campaign, _ = client.FetchCampaign(campaignId)
+		campaign, _ = client.FetchCampaign(campaignId, false)
 	}
 
 	if campaign == nil {
