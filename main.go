@@ -113,7 +113,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 		tr := db.TrackedReward{}
 		tx.First(&tr, "user_id = ? AND reward_id = ?", user.ID, r.Id)
 		if tx.Error != nil || tr.ID == 0 {
-			logging.Infof("Could not find tracked reward %d for user %d", r.Id, user.ID)
+			logging.Warnf("Could not find tracked reward %d for user %d", r.Id, user.ID)
 			continue
 		}
 
