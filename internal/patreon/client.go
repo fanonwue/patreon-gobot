@@ -93,7 +93,6 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 			rewardChannel <- ra
 		}
 	}()
-	logging.Debugf("Fetching reward %d", id)
 	reward, err := c.FetchReward(id)
 
 	if err == nil {
@@ -153,12 +152,14 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], ctx context.Context) <-
 }
 
 func (c *Client) FetchReward(id RewardId) (*Reward, error) {
+	logging.Debugf("Fetching reward %d", id)
 	reward := &RewardResponse{}
 	err := c.fetch(id.ApiUrl(), reward)
 	return &reward.Data, err
 }
 
 func (c *Client) FetchCampaign(id CampaignId) (*Campaign, error) {
+	logging.Debugf("Fetching campaign %d", id)
 	campaign := &CampaignResponse{}
 	err := c.fetch(id.ApiUrl(), campaign)
 	return &campaign.Data, err
