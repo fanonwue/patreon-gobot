@@ -44,7 +44,10 @@ func main() {
 func setup() (context.Context, context.CancelFunc) {
 	logging.Info("---- BOT STARTING ----")
 	logging.Info("Welcome to Patreon GoBot!")
-	godotenv.Load()
+	dotenvErr := godotenv.Load()
+	if dotenvErr != nil {
+		logging.Errorf("Error loading .env file: %v", dotenvErr)
+	}
 	db.CreateDatabase()
 
 	appContext, cancel := signal.NotifyContext(context.Background(),
