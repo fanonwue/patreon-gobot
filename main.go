@@ -117,13 +117,9 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 			continue
 		}
 
-		if r.IsPresent() {
-			if r.IsAvailable() {
-				onAvailable(user, &r, &tr, c)
-			} else {
-				tr.AvailableSince = nil
-			}
-
+		if r.Status == patreon.RewardErrorRateLimit {
+			logging.Warnf("Got rate limited for reward: %d", r.Id)
+			continue
 		}
 
 		if r.Status != patreon.RewardFound {
@@ -132,6 +128,16 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 				missingRewards = append(missingRewards, &r)
 			}
 			logging.Warnf("Reward not found: %d", r.Id)
+		} else {
+			tr.IsMissing = false
+		}
+
+		if r.IsPresent() {
+			if r.IsAvailable() {
+				onAvailable(user, &r, &tr, c)
+			} else {
+				tr.AvailableSince = nil
+			}
 		}
 
 		tx.Save(&tr)
