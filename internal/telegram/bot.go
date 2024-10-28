@@ -76,6 +76,7 @@ func StartBot(ctx context.Context) *bot.Bot {
 }
 
 func NotifyAvailable(user *db.User, reward *patreon.RewardResult, campaign *patreon.Campaign) {
+	logging.Infof("Notifying about available reward: %d", reward.Id)
 	buf := new(bytes.Buffer)
 	err := rewardAvailableTemplate.Execute(buf, &tmpl.RewardAvailableData{
 		Reward:   reward.Reward,

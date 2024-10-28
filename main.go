@@ -83,7 +83,7 @@ func StartBackgroundUpdates(ctx context.Context, interval time.Duration) {
 }
 
 func UpdateJob(ctx context.Context) {
-	logging.Info("Checking for available rewards")
+	logging.Debug("Checking for available rewards")
 	users := make([]db.User, 0)
 	db.Db().Find(&users)
 
@@ -148,7 +148,7 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 }
 
 func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, client *patreon.Client) {
-	logging.Infof("Reward available: %d", r.Id)
+	logging.Debugf("Reward available: %d", r.Id)
 	now := time.Now()
 
 	if tr.AvailableSince == nil {
@@ -167,7 +167,6 @@ func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, c
 	}
 
 	if tr.LastNotified == nil || tr.AvailableSince.After(*tr.LastNotified) {
-		logging.Infof("Notifying about available reward: %d", r.Id)
 		telegram.NotifyAvailable(user, r, campaign)
 		now := time.Now()
 		tr.LastNotified = &now
