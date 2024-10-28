@@ -42,7 +42,6 @@ func main() {
 }
 
 func setup() (context.Context, context.CancelFunc) {
-	logging.SetLogLevel(logging.LevelDebug)
 	logging.Info("---- BOT STARTING ----")
 	logging.Info("Welcome to Patreon GoBot!")
 	godotenv.Load()
