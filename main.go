@@ -46,7 +46,7 @@ func setup() (context.Context, context.CancelFunc) {
 	logging.Info("Welcome to Patreon GoBot!")
 	dotenvErr := godotenv.Load()
 	if dotenvErr != nil {
-		logging.Errorf("Error loading .env file: %v", dotenvErr)
+		logging.Debugf("Error loading .env file: %v", dotenvErr)
 	}
 	db.CreateDatabase()
 
