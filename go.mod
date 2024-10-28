@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/go-telegram/bot v1.9.1
 	github.com/joho/godotenv v1.5.1
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.9.0
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.12

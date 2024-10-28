@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"sync"
 )
 
@@ -66,7 +67,7 @@ func (c *Client) CheckAvailability(rewardIds []RewardId, ctx context.Context) <-
 
 	go func() {
 		defer close(rewardResults)
-		for rewardResult := range c.FetchRewardsSlice(rewardIds, ctx) {
+		for rewardResult := range c.FetchRewardsSlice(rewardIds, true, ctx) {
 			if rewardResult.Status != RewardFound {
 				rewardResults <- rewardResult
 				continue
@@ -82,7 +83,7 @@ func (c *Client) CheckAvailability(rewardIds []RewardId, ctx context.Context) <-
 	return rewardResults
 }
 
-func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardResult, callback func()) {
+func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardResult, forceRefresh bool, callback func()) {
 	defer callback()
 	putInChannel := false
 	ra := RewardResult{
@@ -93,7 +94,7 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 			rewardChannel <- ra
 		}
 	}()
-	reward, err := c.FetchReward(id)
+	reward, err := c.FetchReward(id, forceRefresh)
 
 	if err == nil {
 		ra.Reward = reward
@@ -118,11 +119,11 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 	}
 }
 
-func (c *Client) FetchRewardsSlice(rewardIds []RewardId, ctx context.Context) <-chan RewardResult {
-	return c.FetchRewards(slices.Values(rewardIds), ctx)
+func (c *Client) FetchRewardsSlice(rewardIds []RewardId, forceRefresh bool, ctx context.Context) <-chan RewardResult {
+	return c.FetchRewards(slices.Values(rewardIds), forceRefresh, ctx)
 }
 
-func (c *Client) FetchRewards(idIter iter.Seq[RewardId], ctx context.Context) <-chan RewardResult {
+func (c *Client) FetchRewards(idIter iter.Seq[RewardId], forceRefresh bool, ctx context.Context) <-chan RewardResult {
 	jobs := make(chan int, c.MaxParallelism)
 	rewardResults := make(chan RewardResult)
 	wg := &sync.WaitGroup{}
@@ -141,7 +142,7 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], ctx context.Context) <-
 			}
 			jobCounter += 1
 			wg.Add(1)
-			go c.fetchRewardInternal(id, rewardResults, func() {
+			go c.fetchRewardInternal(id, rewardResults, forceRefresh, func() {
 				<-jobs
 				wg.Done()
 			})
@@ -151,18 +152,46 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], ctx context.Context) <-
 	return rewardResults
 }
 
-func (c *Client) FetchReward(id RewardId) (*Reward, error) {
+func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
+	if !forceRefresh {
+		cached, found := rewardsCache.Get(strconv.Itoa(int(id)))
+		if found && cached != nil {
+			return cached.(*Reward), nil
+		}
+	}
 	logging.Debugf("Fetching reward %d", id)
 	reward := &RewardResponse{}
 	err := c.fetch(id.ApiUrl(), reward)
-	return &reward.Data, err
+	var rewardData *Reward
+	if err == nil && reward != nil {
+		rewardData = &reward.Data
+		// Make sure the reward actually got found before caching it
+		if rewardData.Id != 0 {
+			campaignsCache.SetDefault(strconv.Itoa(int(id)), rewardData)
+		}
+	}
+	return rewardData, err
 }
 
-func (c *Client) FetchCampaign(id CampaignId) (*Campaign, error) {
+func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, error) {
+	if !forceRefresh {
+		cached, found := campaignsCache.Get(strconv.Itoa(int(id)))
+		if found && cached != nil {
+			return cached.(*Campaign), nil
+		}
+	}
 	logging.Debugf("Fetching campaign %d", id)
 	campaign := &CampaignResponse{}
 	err := c.fetch(id.ApiUrl(), campaign)
-	return &campaign.Data, err
+	var campaignData *Campaign
+	if err == nil && campaign != nil {
+		campaignData = &campaign.Data
+		// Make sure the campaign actually got found before caching it
+		if campaignData.Id != 0 {
+			campaignsCache.SetDefault(strconv.Itoa(int(id)), campaignData)
+		}
+	}
+	return campaignData, err
 }
 
 func (c *Client) fetch(url *url.URL, target any) error {

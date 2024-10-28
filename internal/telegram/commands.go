@@ -91,7 +91,7 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	var foundIds []patreon.RewardId
 
-	for r := range patreonClient().FetchRewardsSlice(newRewardIds, ctx) {
+	for r := range patreonClient().FetchRewardsSlice(newRewardIds, false, ctx) {
 		if r.IsPresent() {
 			foundIds = append(foundIds, r.Id)
 		}
@@ -184,7 +184,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 
 	rewardResults := patreonClient().FetchRewardsSlice(util.Map(user.Rewards, func(r db.TrackedReward) patreon.RewardId {
 		return patreon.RewardId(r.RewardId)
-	}), ctx)
+	}), false, ctx)
 
 	var missingRewards []*patreon.RewardResult
 
@@ -205,7 +205,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 
 		listCampaign, found := campaigns[campaignId]
 		if !found {
-			campaign, err := patreonClient().FetchCampaign(campaignId)
+			campaign, err := patreonClient().FetchCampaign(campaignId, false)
 			if err != nil {
 				result.Status = patreon.RewardErrorNoCampaign
 				missingRewards = append(missingRewards, &result)
