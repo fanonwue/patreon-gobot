@@ -3,7 +3,7 @@ package patreon
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/fanonwue/patreon-gobot/internal/util"
 	"net/url"
 	"strconv"
 	"strings"
@@ -116,8 +116,7 @@ func (r *Reward) Title() string {
 }
 
 func (r *Reward) FormattedAmount() string {
-	amount := fmt.Sprintf("%.2f", float64(r.Attributes.AmountCents)/100)
-	return fmt.Sprintf("%s %s", amount, r.Attributes.Currency)
+	return util.FormatMoney(float64(r.Attributes.AmountCents)/100, r.Attributes.Currency)
 }
 
 func (c *Campaign) FullUrl() string {
