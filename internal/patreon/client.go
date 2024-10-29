@@ -154,7 +154,7 @@ func (c *Client) FetchRewards(idIter iter.Seq[RewardId], forceRefresh bool, ctx 
 }
 
 func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
-	if !forceRefresh {
+	if cacheEnabled && !forceRefresh {
 		cached, found := rewardsCache.Get(id)
 		if found && cached != nil {
 			return cached, nil
@@ -167,7 +167,7 @@ func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
 	if err == nil && reward != nil {
 		rewardData = &reward.Data
 		// Make sure the reward actually got found before caching it
-		if rewardData.Id != 0 {
+		if cacheEnabled && rewardData.Id != 0 {
 			rewardsCache.Set(id, rewardData)
 		}
 	}
@@ -175,7 +175,7 @@ func (c *Client) FetchReward(id RewardId, forceRefresh bool) (*Reward, error) {
 }
 
 func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, error) {
-	if !forceRefresh {
+	if cacheEnabled && !forceRefresh {
 		cached, found := campaignsCache.Get(id)
 		if found && cached != nil {
 			return cached, nil
@@ -188,7 +188,7 @@ func (c *Client) FetchCampaign(id CampaignId, forceRefresh bool) (*Campaign, err
 	if err == nil && campaign != nil {
 		campaignData = &campaign.Data
 		// Make sure the campaign actually got found before caching it
-		if campaignData.Id != 0 {
+		if cacheEnabled && campaignData.Id != 0 {
 			campaignsCache.Set(id, campaignData)
 		}
 	}

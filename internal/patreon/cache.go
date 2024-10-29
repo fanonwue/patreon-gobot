@@ -76,6 +76,7 @@ func (c *Cache[K, T]) Set(key K, value T) {
 	c.values[key] = CacheEntry[T]{value: value, expiresAt: time.Now().Add(c.ttl)}
 }
 
+const cacheEnabled = true
 const cacheTTL = 10 * time.Minute
 const cacheCleanup = 15 * time.Minute
 
@@ -88,31 +89,34 @@ func OnStartup(appContext context.Context) {
 		logging.Debug("OnStartup() already called")
 		return
 	}
-	rewardsCache = &Cache[RewardId, *Reward]{
-		name:   "RewardsCache",
-		ttl:    cacheTTL,
-		mu:     sync.RWMutex{},
-		values: make(map[RewardId]CacheEntry[*Reward]),
+
+	if cacheEnabled {
+		rewardsCache = &Cache[RewardId, *Reward]{
+			name:   "RewardsCache",
+			ttl:    cacheTTL,
+			mu:     sync.RWMutex{},
+			values: make(map[RewardId]CacheEntry[*Reward]),
+		}
+
+		campaignsCache = &Cache[CampaignId, *Campaign]{
+			name:   "CampaignsCache",
+			ttl:    cacheTTL,
+			mu:     sync.RWMutex{},
+			values: make(map[CampaignId]CacheEntry[*Campaign]),
+		}
+
+		go func() {
+			ctx, cancel := context.WithCancel(appContext)
+			defer cancel()
+			rewardsCache.startCleanupJob(cacheCleanup, ctx)
+		}()
+
+		go func() {
+			ctx, cancel := context.WithCancel(appContext)
+			defer cancel()
+			campaignsCache.startCleanupJob(cacheCleanup, ctx)
+		}()
 	}
-
-	campaignsCache = &Cache[CampaignId, *Campaign]{
-		name:   "CampaignsCache",
-		ttl:    cacheTTL,
-		mu:     sync.RWMutex{},
-		values: make(map[CampaignId]CacheEntry[*Campaign]),
-	}
-
-	go func() {
-		ctx, cancel := context.WithCancel(appContext)
-		defer cancel()
-		rewardsCache.startCleanupJob(cacheCleanup, ctx)
-	}()
-
-	go func() {
-		ctx, cancel := context.WithCancel(appContext)
-		defer cancel()
-		campaignsCache.startCleanupJob(cacheCleanup, ctx)
-	}()
 
 	onStartupCalled = true
 }
