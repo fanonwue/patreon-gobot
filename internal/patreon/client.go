@@ -104,8 +104,6 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 		var responseCodeError *ResponseCodeError
 		if errors.As(err, &responseCodeError) {
 			putInChannel = true
-			ra.Status = RewardErrorUnknown
-
 			switch responseCodeError.StatusCode {
 			case http.StatusForbidden:
 				ra.Status = RewardErrorForbidden
@@ -113,9 +111,12 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 				ra.Status = RewardErrorNotFound
 			case http.StatusTooManyRequests:
 				ra.Status = RewardErrorRateLimit
+			default:
+				ra.Status = RewardErrorUnknown
+				logging.Errorf("unknown error fetching reward: %v", err)
 			}
 		} else {
-			logging.Errorf("Error fetching reward %d: %v", id, err)
+			logging.Errorf("error fetching reward %d: %v", id, err)
 		}
 	}
 }
