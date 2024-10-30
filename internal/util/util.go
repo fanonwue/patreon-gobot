@@ -8,6 +8,14 @@ const EnvPrefix = "PB_"
 
 var truthyValues = []string{"1", "true", "yes", "on", "enable"}
 
+func ReverseMap[M ~map[K]V, K comparable, V comparable](m M) map[V]K {
+	reversed := make(map[V]K, len(m))
+	for k, v := range m {
+		reversed[v] = k
+	}
+	return reversed
+}
+
 func Map[T, U any](ts []T, f func(T) U) []U {
 	us := make([]U, len(ts))
 	for i := range ts {
