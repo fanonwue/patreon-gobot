@@ -141,8 +141,9 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 			if !tr.IsMissing {
 				tr.IsMissing = true
 				missingRewards = append(missingRewards, &r)
+				// Don't repeat the warning if the reward is known to be missing already
+				logging.Warnf("Reward not found: %d", r.Id)
 			}
-			logging.Warnf("Reward not found: %d", r.Id)
 		} else {
 			tr.IsMissing = false
 		}
