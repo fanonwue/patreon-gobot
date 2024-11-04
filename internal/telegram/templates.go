@@ -41,20 +41,7 @@ func createTemplate(targetTemplatePath string) (*template.Template, error) {
 func templateFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"rewardMissingReason": func(reason patreon.RewardStatus) string {
-			switch reason {
-			case patreon.RewardErrorForbidden:
-				return "Forbidden"
-			case patreon.RewardErrorNotFound:
-				return "Not Found"
-			case patreon.RewardErrorNoCampaign:
-				return "No Campaign"
-			case patreon.RewardErrorRateLimit:
-				return "Rate limited"
-			case patreon.RewardFound:
-				return "Reward found (?!?!)"
-			default:
-				return "Unknown error"
-			}
+			return reason.Text()
 		},
 		"tgEscape": func(s string) string { return Escape(s) },
 	}

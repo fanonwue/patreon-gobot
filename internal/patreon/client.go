@@ -24,6 +24,23 @@ const (
 	RewardErrorRateLimit
 )
 
+func (rs RewardStatus) Text() string {
+	switch rs {
+	case RewardErrorForbidden:
+		return "Forbidden"
+	case RewardErrorNotFound:
+		return "Not Found"
+	case RewardErrorNoCampaign:
+		return "No Campaign"
+	case RewardErrorRateLimit:
+		return "Rate limited"
+	case RewardFound:
+		return "Reward found (?!?!)"
+	default:
+		return "Unknown error"
+	}
+}
+
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"
 
 type (
