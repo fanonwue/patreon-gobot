@@ -1,6 +1,7 @@
 package db
 
 import (
+	"github.com/fanonwue/patreon-gobot/internal/util"
 	"gorm.io/gorm"
 	"strings"
 	"time"
@@ -34,5 +35,11 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
 	}
 
 	u.Language = strings.ToUpper(u.Language)
+	return nil
+}
+
+func (tr *TrackedReward) BeforeSave(tx *gorm.DB) error {
+	tr.AvailableSince = util.ToUTC(tr.AvailableSince)
+	tr.LastNotified = util.ToUTC(tr.LastNotified)
 	return nil
 }
