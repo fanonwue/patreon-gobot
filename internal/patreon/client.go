@@ -22,6 +22,8 @@ const (
 	RewardErrorNotFound
 	RewardErrorNoCampaign
 	RewardErrorRateLimit
+	RewardErrorInternalServerError
+	RewardErrorGatewayError
 )
 
 func (rs RewardStatus) Text() string {
@@ -34,6 +36,10 @@ func (rs RewardStatus) Text() string {
 		return "No Campaign"
 	case RewardErrorRateLimit:
 		return "Rate limited"
+	case RewardErrorInternalServerError:
+		return "Internal Server Error (at Patreon)"
+	case RewardErrorGatewayError:
+		return "Gateway Error (at Patreon)"
 	case RewardFound:
 		return "Reward found (?!?!)"
 	default:
@@ -128,6 +134,10 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 				ra.Status = RewardErrorNotFound
 			case http.StatusTooManyRequests:
 				ra.Status = RewardErrorRateLimit
+			case http.StatusInternalServerError:
+				ra.Status = RewardErrorInternalServerError
+			case http.StatusGatewayTimeout, http.StatusBadGateway:
+				ra.Status = RewardErrorGatewayError
 			default:
 				ra.Status = RewardErrorUnknown
 				logging.Errorf("unknown error fetching reward: %v", err)
