@@ -129,7 +129,7 @@ func TestClient_FetchReward(t *testing.T) {
 	}
 
 	for key, callback := range rewardTestMap {
-		reward, err := client.FetchReward(key)
+		reward, err := client.FetchReward(key, true)
 		callback(key, reward, err)
 	}
 }
@@ -170,7 +170,7 @@ func TestClient_FetchCampaign(t *testing.T) {
 	}
 
 	for key, callback := range campaignTestMap {
-		campaign, err := client.FetchCampaign(key)
+		campaign, err := client.FetchCampaign(key, true)
 		callback(key, campaign, err)
 	}
 }
@@ -184,7 +184,7 @@ func TestClient_FetchRewardsSlice(t *testing.T) {
 
 	rewardIds := slices.Concat([]RewardId{1, 7790866, 10206990}, forbiddenRewards)
 
-	rewardResults := client.FetchRewardsSlice(rewardIds, context.Background())
+	rewardResults := client.FetchRewardsSlice(rewardIds, true, context.Background())
 
 	for r := range rewardResults {
 		if r.Id == 1 {
