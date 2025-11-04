@@ -2,9 +2,10 @@ package patreon
 
 import (
 	"context"
-	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"sync"
 	"time"
+
+	"github.com/fanonwue/patreon-gobot/internal/logging"
 )
 
 type (
@@ -84,6 +85,22 @@ var rewardsCache *Cache[RewardId, *Reward]
 var campaignsCache *Cache[CampaignId, *Campaign]
 var onStartupCalled = false
 
+func init() {
+	rewardsCache = &Cache[RewardId, *Reward]{
+		name:   "RewardsCache",
+		ttl:    cacheTTL,
+		mu:     sync.RWMutex{},
+		values: make(map[RewardId]CacheEntry[*Reward]),
+	}
+
+	campaignsCache = &Cache[CampaignId, *Campaign]{
+		name:   "CampaignsCache",
+		ttl:    cacheTTL,
+		mu:     sync.RWMutex{},
+		values: make(map[CampaignId]CacheEntry[*Campaign]),
+	}
+}
+
 func OnStartup(appContext context.Context) {
 	if onStartupCalled {
 		logging.Debug("OnStartup() already called")
@@ -91,20 +108,6 @@ func OnStartup(appContext context.Context) {
 	}
 
 	if cacheEnabled {
-		rewardsCache = &Cache[RewardId, *Reward]{
-			name:   "RewardsCache",
-			ttl:    cacheTTL,
-			mu:     sync.RWMutex{},
-			values: make(map[RewardId]CacheEntry[*Reward]),
-		}
-
-		campaignsCache = &Cache[CampaignId, *Campaign]{
-			name:   "CampaignsCache",
-			ttl:    cacheTTL,
-			mu:     sync.RWMutex{},
-			values: make(map[CampaignId]CacheEntry[*Campaign]),
-		}
-
 		go func() {
 			ctx, cancel := context.WithCancel(appContext)
 			defer cancel()
