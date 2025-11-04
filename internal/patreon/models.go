@@ -3,11 +3,12 @@ package patreon
 import (
 	"encoding/json"
 	"errors"
-	"github.com/fanonwue/patreon-gobot/internal/util"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fanonwue/patreon-gobot/internal/util"
 )
 
 type (
@@ -25,18 +26,18 @@ type (
 	}
 
 	RewardAttributes struct {
-		AmountCents int       `json:"amount_cents"`
-		CreatedAt   time.Time `json:"created_at"`
-		EditedAt    time.Time `json:"edited_at"`
-		PublishedAt time.Time `json:"published_at"`
-		Published   bool      `json:"published"`
-		Currency    string    `json:"currency"`
-		Description string    `json:"description"`
-		Remaining   int       `json:"remaining"`
-		UserLimit   int       `json:"user_limit"`
-		Title       string    `json:"title"`
-		Url         string    `json:"url"`
-		ImageUrl    string    `json:"image_url"`
+		AmountCents int           `json:"amount_cents"`
+		CreatedAt   time.Time     `json:"created_at"`
+		EditedAt    time.Time     `json:"edited_at"`
+		PublishedAt time.Time     `json:"published_at"`
+		Published   bool          `json:"published"`
+		Currency    util.Currency `json:"currency"`
+		Description string        `json:"description"`
+		Remaining   int           `json:"remaining"`
+		UserLimit   int           `json:"user_limit"`
+		Title       string        `json:"title"`
+		Url         string        `json:"url"`
+		ImageUrl    string        `json:"image_url"`
 	}
 
 	RewardRelationships struct {

@@ -3,7 +3,6 @@ package patreon
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,6 +12,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/fanonwue/patreon-gobot/internal/util"
+	"github.com/stretchr/testify/assert"
 )
 
 var root = "../../"
@@ -96,6 +98,8 @@ func TestClient_FetchReward(t *testing.T) {
 		assert.False(t, r.IsAvailable())
 		assert.Equal(t, 6000, r.Attributes.AmountCents)
 		assert.Equal(t, "Disciple", r.Attributes.Title)
+		assert.Equal(t, "60.00 $", r.FormattedAmount())
+		assert.Equal(t, util.Currency("USD"), r.Attributes.Currency)
 
 		expectedCreatedAt, _ := time.Parse(time.RFC3339, "2023-09-19T22:44:20.842+00:00")
 		assert.Equal(t, expectedCreatedAt, r.Attributes.CreatedAt)

@@ -6,28 +6,35 @@ import (
 	"strings"
 )
 
-var currencySymbols = map[string]string{
-	"EUR": "€",
-	"USD": "$",
-	"GBP": "£",
+type Currency string
+
+func (c Currency) Symbol() string {
+	// Make sure the currency name is uppercase
+	currencyString := c.String()
+	switch currencyString {
+	case "EUR":
+		return "€"
+	case "USD":
+		return "$"
+	case "GBP":
+		return "£"
+	default:
+		return currencyString
+	}
+}
+
+func (c Currency) String() string {
+	return strings.ToUpper(string(c))
 }
 
 func CurrencySymbol(currency string) string {
-	// Make sure the currency name is uppercase
-	upper := strings.ToUpper(currency)
-	symbol, found := currencySymbols[upper]
-	if found {
-		return symbol
-	}
-	return upper
+	return Currency(currency).Symbol()
 }
 
-func FormatMoney(money float64, currency string) string {
-	symbol := CurrencySymbol(currency)
-	return fmt.Sprintf("%.2f %s", money, symbol)
+func FormatMoney(money float64, currency Currency) string {
+	return fmt.Sprintf("%.2f %s", money, currency.Symbol())
 }
 
-func FormatMoneyBig(money *big.Float, currency string) string {
-	symbol := CurrencySymbol(currency)
-	return money.Text('f', 2) + " " + symbol
+func FormatMoneyBig(money *big.Float, currency Currency) string {
+	return money.Text('f', 2) + " " + currency.Symbol()
 }
