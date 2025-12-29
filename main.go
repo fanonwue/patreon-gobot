@@ -2,18 +2,20 @@ package main
 
 import (
 	"context"
-	"github.com/fanonwue/patreon-gobot/internal/db"
-	"github.com/fanonwue/patreon-gobot/internal/logging"
-	"github.com/fanonwue/patreon-gobot/internal/patreon"
-	"github.com/fanonwue/patreon-gobot/internal/telegram"
-	"github.com/fanonwue/patreon-gobot/internal/util"
-	"github.com/joho/godotenv"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/fanonwue/goutils/dsext"
+	"github.com/fanonwue/goutils/logging"
+	"github.com/fanonwue/patreon-gobot/internal/db"
+	"github.com/fanonwue/patreon-gobot/internal/patreon"
+	"github.com/fanonwue/patreon-gobot/internal/telegram"
+	"github.com/fanonwue/patreon-gobot/internal/util"
+	"github.com/joho/godotenv"
 )
 
 const minimumUpdateInterval = 30 * time.Second
@@ -103,27 +105,26 @@ func UpdateJob(ctx context.Context) {
 	db.Db().Find(&users)
 
 	wg := sync.WaitGroup{}
-	// Do checks synchronously for now to prevent any massive rate limiting
 	for _, user := range users {
-		wg.Add(1)
-		go updateForUser(&user, ctx, func() {
-			wg.Done()
+		wg.Go(func() {
+			updateForUser(&user, ctx)
 		})
 	}
 
 	wg.Wait()
 }
 
-func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
-	defer doneCallback()
+func updateForUser(user *db.User, ctx context.Context) {
 	db.Db().Preload("Rewards").First(&user)
 	c := patreon.NewClient(4)
-	rewards := c.FetchRewardsSlice(util.Map(user.Rewards, func(tr db.TrackedReward) patreon.RewardId {
+	rewards := c.FetchRewardsSlice(dsext.Map(user.Rewards, func(tr db.TrackedReward) patreon.RewardId {
 		return patreon.RewardId(tr.RewardId)
 	}), true, ctx)
 
 	tx := db.Db().Begin()
-	var missingRewards []*patreon.RewardResult
+	// Make sure the transaction always gets closed at the end, discarding any uncommitted changes
+	defer tx.Rollback()
+	missingRewards := make([]*patreon.RewardResult, 0)
 	for r := range rewards {
 		tr := db.TrackedReward{}
 		tx.First(&tr, "user_id = ? AND reward_id = ?", user.ID, r.Id)
@@ -157,7 +158,6 @@ func updateForUser(user *db.User, ctx context.Context, doneCallback func()) {
 		}
 
 		tx.Save(&tr)
-
 	}
 	telegram.NotifyMissing(user, missingRewards)
 	tx.Commit()

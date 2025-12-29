@@ -5,18 +5,19 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"github.com/fanonwue/patreon-gobot/internal/db"
-	"github.com/fanonwue/patreon-gobot/internal/logging"
-	"github.com/fanonwue/patreon-gobot/internal/patreon"
-	"github.com/fanonwue/patreon-gobot/internal/tmpl"
-	"github.com/fanonwue/patreon-gobot/internal/util"
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
-	"gorm.io/gorm"
 	"maps"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/fanonwue/goutils/dsext"
+	"github.com/fanonwue/goutils/logging"
+	"github.com/fanonwue/patreon-gobot/internal/db"
+	"github.com/fanonwue/patreon-gobot/internal/patreon"
+	"github.com/fanonwue/patreon-gobot/internal/tmpl"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+	"gorm.io/gorm"
 )
 
 func parseIdList(message string) []int {
@@ -69,7 +70,7 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	user, _ := userFromChatId(chatId, nil)
 	db.Db().Preload("Rewards").Find(user)
-	existingRewardIds := util.Map(user.Rewards, func(r db.TrackedReward) int {
+	existingRewardIds := dsext.Map(user.Rewards, func(r db.TrackedReward) int {
 		return int(r.RewardId)
 	})
 
@@ -98,15 +99,28 @@ func addRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 
 	var savedRewards []string
-	tx := db.Db().Begin()
-	for _, id := range foundIds {
-		tracked := db.TrackedReward{RewardId: int64(id), UserID: user.ID}
-		tx.Save(&tracked)
-		if tracked.ID > 0 {
-			savedRewards = append(savedRewards, strconv.Itoa(int(tracked.RewardId)))
+	txErr := db.Db().Transaction(func(tx *gorm.DB) error {
+		for _, id := range foundIds {
+			tracked := db.TrackedReward{RewardId: int64(id), UserID: user.ID}
+			tx.Save(&tracked)
+			if tx.Error != nil {
+				return tx.Error
+			}
+			if tracked.ID > 0 {
+				savedRewards = append(savedRewards, strconv.Itoa(int(tracked.RewardId)))
+			}
 		}
+		return nil
+	})
+	if txErr != nil {
+		logging.Errorf("Error occured while adding rewards: %v", txErr)
+		sendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatId,
+			Text:   fmt.Sprintf("Error saving rewards: %s", txErr),
+		})
+		return
 	}
-	tx.Commit()
+
 	savedRewardsJoined := strings.Join(savedRewards, ", ")
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
@@ -147,14 +161,23 @@ func removeRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update
 	user, _ := userFromChatId(chatId, nil)
 
 	var removedRewards []string
-	tx := db.Db().Begin()
-	for _, id := range ids {
-		tx.Unscoped().Delete(&db.TrackedReward{}, "user_id = ? AND reward_id = ?", user.ID, id)
-		if tx.Error == nil {
-			removedRewards = append(removedRewards, strconv.Itoa(id))
+	txErr := db.Db().Transaction(func(tx *gorm.DB) error {
+		for _, id := range ids {
+			tx.Unscoped().Delete(&db.TrackedReward{}, "user_id = ? AND reward_id = ?", user.ID, id)
+			if tx.Error == nil {
+				removedRewards = append(removedRewards, strconv.Itoa(id))
+			}
 		}
+		return nil
+	})
+	if txErr != nil {
+		logging.Errorf("Error occured while removing rewards: %v", txErr)
+		sendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatId,
+			Text:   fmt.Sprintf("Error removing rewards: %s", txErr),
+		})
+		return
 	}
-	tx.Commit()
 	removedRewardsJoined := strings.Join(removedRewards, ", ")
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
@@ -182,7 +205,7 @@ func listRewardsHandler(ctx context.Context, b *bot.Bot, update *models.Update) 
 
 	campaigns := map[patreon.CampaignId]*tmpl.ListCampaign{}
 
-	rewardResults := patreonClient().FetchRewardsSlice(util.Map(user.Rewards, func(r db.TrackedReward) patreon.RewardId {
+	rewardResults := patreonClient().FetchRewardsSlice(dsext.Map(user.Rewards, func(r db.TrackedReward) patreon.RewardId {
 		return patreon.RewardId(r.RewardId)
 	}), false, ctx)
 
@@ -272,12 +295,15 @@ func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.U
 		MessageID: update.Message.ID,
 	}
 
-	tx := db.Db().Begin()
-	user, _ := userFromChatId(chatId, tx)
-	tx.Model(&db.TrackedReward{}).Where("user_id = ?", user.ID).Update("last_notified", gorm.Expr("NULL"))
-	if tx.Error != nil {
-		tx.Rollback()
-		logging.Errorf("Error resetting rewards: %v", tx.Error)
+	var user *db.User
+
+	txErr := db.Db().Transaction(func(tx *gorm.DB) error {
+		user, _ = userFromChatId(chatId, tx)
+		tx.Model(&db.TrackedReward{}).Where("user_id = ?", user.ID).Update("last_notified", gorm.Expr("NULL"))
+		return tx.Error
+	})
+	if txErr != nil {
+		logging.Errorf("Error resetting rewards: %v", txErr)
 		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID:          chatId,
 			ReplyParameters: &reply,
@@ -285,7 +311,7 @@ func resetNotificationsHandler(ctx context.Context, b *bot.Bot, update *models.U
 		})
 		return
 	}
-	tx.Commit()
+
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:          chatId,
 		ReplyParameters: &reply,
@@ -318,21 +344,34 @@ func startCommand() *CommandHandler {
 
 func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatId := update.Message.Chat.ID
-	tx := db.Db().Begin()
-	user, userFound := userFromChatId(chatId, tx)
+	var user *db.User
+	var userFound bool
+	txErr := db.Db().Transaction(func(tx *gorm.DB) error {
+		user, userFound = userFromChatId(chatId, tx)
 
+		if userFound {
+			return nil
+		}
+
+		user.TelegramChatId = chatId
+		tx.Create(&user)
+		return tx.Error
+	})
+	if txErr != nil {
+		logging.Errorf("Error adding user: %v", txErr)
+		sendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatId,
+			Text:   "Error adding you as user",
+		})
+		return
+	}
 	if userFound {
 		sendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatId,
 			Text:   "You are already registered. Welcome back!",
 		})
-		tx.Commit()
 		return
 	}
-
-	user.TelegramChatId = chatId
-	tx.Create(&user)
-	tx.Commit()
 
 	sendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    chatId,

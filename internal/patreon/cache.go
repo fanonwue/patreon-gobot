@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fanonwue/patreon-gobot/internal/logging"
+	"github.com/fanonwue/goutils/logging"
 )
 
 type (

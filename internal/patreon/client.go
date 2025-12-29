@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"iter"
 	"net/http"
 	"net/url"
 	"slices"
 	"sync"
+
+	"github.com/fanonwue/goutils/logging"
 )
 
 type RewardStatus int

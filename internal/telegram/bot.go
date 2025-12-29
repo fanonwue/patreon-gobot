@@ -4,18 +4,20 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
+	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/fanonwue/goutils/dsext"
+	"github.com/fanonwue/goutils/logging"
 	"github.com/fanonwue/patreon-gobot/internal/db"
-	"github.com/fanonwue/patreon-gobot/internal/logging"
 	"github.com/fanonwue/patreon-gobot/internal/patreon"
 	"github.com/fanonwue/patreon-gobot/internal/tmpl"
 	"github.com/fanonwue/patreon-gobot/internal/util"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"gorm.io/gorm"
-	"os"
-	"slices"
-	"strconv"
-	"strings"
 )
 
 var botInstance *bot.Bot
@@ -98,7 +100,7 @@ func NotifyMissing(user *db.User, missing []*patreon.RewardResult) {
 		return
 	}
 
-	logging.Infof("Notifying about missing rewards: [%s]", util.Join(missing, ", ", func(v *patreon.RewardResult) string {
+	logging.Infof("Notifying about missing rewards: [%s]", dsext.Join(missing, ", ", func(v *patreon.RewardResult) string {
 		return strconv.Itoa(int(v.Id))
 	}))
 	buf := new(bytes.Buffer)
@@ -187,7 +189,7 @@ func registerHandlers(commands []*CommandHandler, tgBot *bot.Bot, ctx context.Co
 
 func registerCommands(commands []*CommandHandler, tgBot *bot.Bot, ctx context.Context) {
 	tgBot.SetMyCommands(ctx, &bot.SetMyCommandsParams{
-		Commands: util.Map(commands, func(ch *CommandHandler) models.BotCommand {
+		Commands: dsext.Map(commands, func(ch *CommandHandler) models.BotCommand {
 			return models.BotCommand{Command: ch.Pattern, Description: ch.Description}
 		}),
 	})
