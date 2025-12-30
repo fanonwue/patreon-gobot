@@ -123,7 +123,13 @@ func updateForUser(user *db.User, ctx context.Context) {
 
 	tx := db.Db().Begin()
 	// Make sure the transaction always gets closed at the end, discarding any uncommitted changes
-	defer tx.Rollback()
+	rollback := true
+	defer func() {
+		if rollback {
+			tx.Rollback()
+		}
+	}()
+
 	missingRewards := make([]*patreon.RewardResult, 0)
 	for r := range rewards {
 		tr := db.TrackedReward{}
@@ -161,6 +167,7 @@ func updateForUser(user *db.User, ctx context.Context) {
 	}
 	telegram.NotifyMissing(user, missingRewards)
 	tx.Commit()
+	rollback = false
 }
 
 func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, client *patreon.Client) {
