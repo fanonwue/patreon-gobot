@@ -33,6 +33,10 @@ func (c *Cache[K, T]) Name() string {
 	return c.name
 }
 
+func (c *Cache[K, T]) String() string {
+	return c.Name()
+}
+
 func (c *Cache[K, T]) cleanupValues() {
 	c.mu.Lock()
 	defer c.mu.Unlock()

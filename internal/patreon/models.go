@@ -128,6 +128,10 @@ func (c *Campaign) Name() string {
 	return c.Attributes.Name
 }
 
+func (c *Campaign) String() string {
+	return c.Name()
+}
+
 func (id *RewardId) UnmarshalJSON(buf []byte) error {
 	newId, err := unmarshalId(buf)
 	if err != nil {
