@@ -172,10 +172,8 @@ func updateForUser(user *db.User, ctx context.Context) {
 
 func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, client *patreon.Client) {
 	logging.Debugf("Reward available: %d", r.Id)
-	now := time.Now()
-
 	if tr.AvailableSince == nil {
-		tr.AvailableSince = &now
+		tr.AvailableSince = new(time.Now())
 	}
 
 	var campaign *patreon.Campaign
@@ -191,8 +189,7 @@ func onAvailable(user *db.User, r *patreon.RewardResult, tr *db.TrackedReward, c
 
 	if tr.LastNotified == nil || tr.AvailableSince.After(*tr.LastNotified) {
 		telegram.NotifyAvailable(user, r, campaign)
-		now := time.Now()
-		tr.LastNotified = &now
+		tr.LastNotified = new(time.Now())
 		if r.Status != patreon.RewardFound {
 			tr.IsMissing = true
 		}
