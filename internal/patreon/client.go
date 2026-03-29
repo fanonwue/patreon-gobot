@@ -129,8 +129,7 @@ func (c *Client) fetchRewardInternal(id RewardId, rewardChannel chan<- RewardRes
 		ra.Reward = reward
 		putInChannel = true
 	} else {
-		var responseCodeError *ResponseCodeError
-		if errors.As(err, &responseCodeError) {
+		if responseCodeError, ok := errors.AsType[*ResponseCodeError](err); ok {
 			putInChannel = true
 			switch responseCodeError.StatusCode {
 			case http.StatusForbidden:
