@@ -2,6 +2,7 @@ package patreon
 
 import (
 	"context"
+	"encoding/json/v2"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,11 +11,13 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/fanonwue/patreon-gobot/internal/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var root = "../../"
@@ -207,5 +210,71 @@ func TestClient_FetchRewardsSlice(t *testing.T) {
 				assert.True(t, r.IsAvailable())
 			}
 		}
+	}
+}
+
+func TestIdUnmarshal(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		out   any
+		want  any
+	}{
+		{name: "reward ID", input: `"10206990"`, out: new(RewardId), want: RewardId(10206990)},
+		{name: "campaign ID", input: `"3876079"`, out: new(CampaignId), want: CampaignId(3876079)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NoError(t, json.UnmarshalRead(strings.NewReader(tt.input), tt.out))
+			assert.Equal(t, tt.want, indirectValue(tt.out))
+		})
+	}
+}
+
+func TestIdUnmarshalRejectsInvalidValues(t *testing.T) {
+	for _, input := range []string{`123`, `"not-an-ID"`, `null`} {
+		t.Run(input, func(t *testing.T) {
+			id := RewardId(42)
+			assert.Error(t, json.UnmarshalRead(strings.NewReader(input), &id))
+			assert.Equal(t, RewardId(42), id)
+		})
+	}
+}
+
+func TestClientFetchRejectsTrailingJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"data": {}} {}`))
+	}))
+	t.Cleanup(server.Close)
+
+	endpoint, err := url.Parse(server.URL)
+	require.NoError(t, err)
+	client := NewClient(1)
+	client.httpClient = server.Client()
+
+	err = client.fetch(endpoint, &RewardResponse{})
+	assert.Error(t, err)
+}
+
+func TestRewardHelpers(t *testing.T) {
+	reward := Reward{Attributes: RewardAttributes{AmountCents: 1234, Currency: util.Currency("EUR"), Remaining: 1, Title: "Tier", Url: "/checkout/tier"}}
+
+	assert.True(t, reward.IsAvailable())
+	assert.Equal(t, "12.34 €", reward.FormattedAmount())
+	assert.Equal(t, "Tier", reward.Title())
+	assert.Equal(t, "/checkout/tier", reward.CheckoutUrl().Path)
+	assert.Equal(t, "https://www.patreon.com/checkout/tier", reward.FullUrl())
+	assert.EqualError(t, func() error { _, err := reward.CampaignId(); return err }(), "reward has no associated campaign")
+}
+
+func indirectValue(value any) any {
+	switch id := value.(type) {
+	case *RewardId:
+		return *id
+	case *CampaignId:
+		return *id
+	default:
+		return value
 	}
 }

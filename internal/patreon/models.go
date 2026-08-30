@@ -1,7 +1,8 @@
 package patreon
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"net/url"
 	"strconv"
@@ -77,9 +78,9 @@ type (
 	CampaignId int
 )
 
-func unmarshalId(buf []byte) (int, error) {
+func unmarshalId(dec *jsontext.Decoder) (int, error) {
 	var rawId string
-	err := json.Unmarshal(buf, &rawId)
+	err := json.UnmarshalDecode(dec, &rawId)
 	if err != nil {
 		return -1, err
 	}
@@ -132,8 +133,8 @@ func (c *Campaign) String() string {
 	return c.Name()
 }
 
-func (id *RewardId) UnmarshalJSON(buf []byte) error {
-	newId, err := unmarshalId(buf)
+func (id *RewardId) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	newId, err := unmarshalId(dec)
 	if err != nil {
 		return err
 	}
@@ -141,8 +142,8 @@ func (id *RewardId) UnmarshalJSON(buf []byte) error {
 	return nil
 }
 
-func (id *CampaignId) UnmarshalJSON(buf []byte) error {
-	newId, err := unmarshalId(buf)
+func (id *CampaignId) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	newId, err := unmarshalId(dec)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@ package patreon
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"iter"
@@ -242,7 +242,7 @@ func (c *Client) fetch(url *url.URL, target any) error {
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return json.NewDecoder(resp.Body).Decode(target)
+		return json.UnmarshalRead(resp.Body, target)
 	case http.StatusNotFound:
 		return &ResponseCodeError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("URL not found: %s", url.String())}
 	case http.StatusForbidden:
