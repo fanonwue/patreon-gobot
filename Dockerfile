@@ -20,7 +20,7 @@ RUN make build
 FROM alpine
 ARG WORKDIR
 ENV PB_ENV=production
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk add  --no-cache ca-certificates-bundle tzdata
 WORKDIR $WORKDIR
 COPY --from=builder $WORKDIR/bin/patreon-gobot .
 
